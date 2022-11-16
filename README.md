@@ -266,3 +266,50 @@ visible_hostname Berlint
 ```
 export htpp_proxy="http://192.199.2.3:5000"
 ```
+
+**No 9**
+
+Pada Proxy Server di Berlint, Loid berencana untuk mengatur bagaimana Client dapat mengakses internet. Artinya setiap client harus menggunakan Berlint sebagai HTTP & HTTPS proxy. Adapun kriteria pengaturannya adalah sebagai berikut:
+
+**1.** Client hanya dapat mengakses internet diluar (selain) hari & jam kerja (senin-jumat 08.00 - 17.00) dan hari libur (dapat mengakses 24 jam penuh)
+
+- pada acl ditambahakan jam kerja `/etc/squid/acl.conf`
+
+```
+acl JAM_KERJA time MTWHF 08:00-17:00
+```
+
+- lalu pada `/etc/squid/squid.conf` ditambahkan
+
+```
+http_access deny WORKDAYS
+http_access allow all
+```
+
+**2.** Adapun pada hari dan jam kerja sesuai nomor (1), client hanya dapat mengakses domain loid-work.com dan franky-work.com (IP tujuan domain dibebaskan)
+
+- pada acl ditambahkan list domain tersebut
+
+```
+acl ALLOWED_DOMAIN dstdomain .loid-work.com .franky-work.com
+```
+
+- lalu pada `/etc/squid/squid.conf` ditambahkan
+
+```
+http_access allow JAM_KERJA ALLOWED_DOMAIN
+```
+
+**3.** Saat akses internet dibuka, client dilarang untuk mengakses web tanpa HTTPS. (Contoh web HTTP: http://example.com)
+
+- pada acl ditambahkan regex untuk memblok string setiap akses http
+
+```
+acl BLOCKED url_regex ^http://.*$
+```
+
+- lalu pada `/etc/squid/squid.conf` ditambahkan
+
+```
+http_access deny BLOCKED
+```
